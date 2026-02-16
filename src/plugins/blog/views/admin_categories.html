@@ -1,0 +1,87 @@
+<div x-data="categoryManager()" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="lg:col-span-1">
+        <div class="card p-5 sticky top-6">
+            <h3 class="font-bold text-white mb-4" x-text="form.id ? 'Edit Category' : 'Add New Category'"></h3>
+            <form @submit.prevent="save">
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Name</label>
+                    <input type="text" x-model="form.name" class="w-full bg-black border border-[#333] text-white p-3 rounded text-sm focus:border-accent outline-none" required placeholder="e.g. Tutorials">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Slug</label>
+                    <input type="text" x-model="form.slug" class="w-full bg-black border border-[#333] text-gray-400 p-2 rounded text-xs font-mono focus:border-accent outline-none" placeholder="auto-generated">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Description</label>
+                    <textarea x-model="form.description" class="w-full bg-black border border-[#333] text-gray-400 p-2 rounded text-sm focus:border-accent outline-none" rows="3"></textarea>
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-accent hover:bg-white text-black font-bold py-2 rounded text-sm transition-all">Save</button>
+                    <button type="button" @click="resetForm()" x-show="form.id" class="px-3 border border-[#333] text-gray-400 rounded hover:text-white">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="card p-0 overflow-hidden">
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr>
+                        <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500">Name</th>
+                        <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500">Slug</th>
+                        <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="cat in categories" :key="cat.id">
+                        <tr class="hover:bg-white/5 transition-colors group">
+                            <td class="p-4 border-b border-[#222]">
+                                <div class="font-bold text-white text-sm" x-text="cat.name"></div>
+                                <div class="text-xs text-gray-600" x-text="cat.description"></div>
+                            </td>
+                            <td class="p-4 border-b border-[#222] text-xs text-gray-400 font-mono" x-text="cat.slug"></td>
+                            <td class="p-4 border-b border-[#222] text-right">
+                                <button @click="edit(cat)" class="text-accent hover:text-white mr-3 text-xs uppercase font-bold">Edit</button>
+                                <button @click="remove(cat.id)" class="text-red-500 hover:text-red-400 text-xs uppercase font-bold">Delete</button>
+                            </td>
+                        </tr>
+                    </template>
+                    <tr x-show="categories.length === 0">
+                        <td colspan="3" class="p-8 text-center text-gray-600">No categories yet.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('categoryManager', () => ({
+            categories: {{categories_data}},
+            form: { id: null, name: '', slug: '', description: '' },
+            
+            resetForm() { this.form = { id: null, name: '', slug: '', description: '' }; },
+            edit(cat) { this.form = { ...cat }; },
+            
+            async save() {
+                const res = await fetch('/admin/blog/categories/save', {
+                    method: 'POST',
+                    body: JSON.stringify(this.form)
+                });
+                if(res.ok) window.location.reload();
+            },
+            
+            async remove(id) {
+                if(!confirm('Delete this category? Posts will be uncategorized.')) return;
+                const res = await fetch('/admin/blog/categories/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({id})
+                });
+                if(res.ok) window.location.reload();
+            }
+        }));
+    });
+</script>

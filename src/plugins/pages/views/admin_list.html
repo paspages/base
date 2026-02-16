@@ -1,0 +1,45 @@
+<div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden" x-data="{ pages: {{pages_data}} }">
+    <div class="p-8 border-b border-gray-100 flex justify-between items-center">
+        <div>
+            <h2 class="text-2xl font-black text-gray-900">Pages Manager</h2>
+            <p class="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Static Content & Landing Pages</p>
+        </div>
+        <a href="/admin/pages/editor" class="bg-primary-600 hover:bg-primary-700 text-white px-6 py-3 rounded-xl text-xs font-black uppercase tracking-widest shadow-lg shadow-cyan-500/20 transition-all">
+            <i class="fas fa-plus mr-2"></i> New Page
+        </a>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-gray-50 border-b border-gray-100 text-xs font-black text-gray-400 uppercase tracking-widest">
+                    <th class="p-6">Title</th>
+                    <th class="p-6">Slug</th>
+                    <th class="p-6">Status</th>
+                    <th class="p-6 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+                <template x-for="page in pages" :key="page.id">
+                    <tr class="hover:bg-gray-50/50 transition-colors">
+                        <td class="p-6 font-bold text-gray-800" x-text="page.title"></td>
+                        <td class="p-6 text-sm text-gray-500 font-mono" x-text="'/' + page.slug"></td>
+                        <td class="p-6">
+                            <span class="px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest" 
+                                  :class="page.status === 'published' ? 'bg-green-100 text-green-600' : 'bg-gray-100 text-gray-500'"
+                                  x-text="page.status">
+                            </span>
+                        </td>
+                        <td class="p-6 text-right">
+                            <a :href="'/admin/pages/editor?id=' + page.id" class="text-gray-400 hover:text-primary-600 mr-4 transition-colors"><i class="fas fa-edit"></i></a>
+                            <button class="text-gray-400 hover:text-red-500 transition-colors"><i class="fas fa-trash"></i></button>
+                        </td>
+                    </tr>
+                </template>
+                <tr x-show="pages.length === 0">
+                    <td colspan="4" class="p-12 text-center text-gray-400 font-bold uppercase text-xs">No pages found. Create one!</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>

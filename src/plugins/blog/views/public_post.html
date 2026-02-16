@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Reading Article...</title>
+  <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+  <style>
+    :root { --nebula-primary: #0891b2; }
+    [x-cloak] { display: none !important; }
+    .dropdown:hover .dropdown-menu { display: block; }
+    .nebula-glow { box-shadow: 0 0 25px rgba(8, 145, 178, 0.1); }
+    .prose img { border-radius: 1.5rem; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+  </style>
+  <script>
+    tailwind.config = { theme: { extend: { colors: { primary: { 600: '#0891b2' } } } } }
+  </script>
+</head>
+
+<body class="bg-gray-50 text-gray-800 min-h-screen flex flex-col" x-data="singlePost()">
+
+  <header class="bg-white shadow-sm border-b border-gray-100 sticky top-0 z-50">
+    <div class="container mx-auto px-4 py-4 flex justify-between items-center max-w-7xl">
+        <a href="/" class="font-black text-2xl text-primary-600 flex items-center gap-2 tracking-tighter">
+            <div class="w-9 h-9 bg-primary-600 rounded-lg flex items-center justify-center text-white shadow-lg shadow-cyan-500/20"><i class="fas fa-bolt text-sm"></i></div>
+            <span>PasPages</span>
+        </a>
+        <nav class="hidden md:flex gap-1 items-center">
+            <template x-for="item in menuTree" :key="item.id">
+                <div class="relative dropdown">
+                    <a :href="item.url" class="px-4 py-2 text-[11px] font-black uppercase tracking-widest text-gray-400 hover:text-primary-600 transition flex items-center gap-2">
+                       <span x-text="item.title"></span>
+                       <i x-show="item.children.length" class="fas fa-chevron-down text-[8px]"></i>
+                    </a>
+                    <template x-if="item.children.length">
+                        <div class="dropdown-menu hidden absolute top-full left-0 w-52 bg-white shadow-2xl border border-gray-100 rounded-b-xl overflow-hidden py-2 z-50">
+                            <template x-for="child in item.children" :key="child.id">
+                                <a :href="child.url" class="block px-6 py-3 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:bg-gray-50 hover:text-primary-600" x-text="child.title"></a>
+                            </template>
+                        </div>
+                    </template>
+                </div>
+            </template>
+        </nav>
+        <button class="md:hidden text-gray-400"><i class="fas fa-bars text-xl"></i></button>
+    </div>
+  </header>
+
+  <div class="bg-gray-100/50 border-b border-gray-200 py-4">
+    <div class="container mx-auto px-4 max-w-7xl">
+        <nav class="flex items-center gap-3 text-[10px] uppercase font-black tracking-widest text-gray-400">
+            <a href="/" class="hover:text-primary-600">Home</a>
+            <i class="fas fa-chevron-right text-[7px] opacity-30"></i>
+            <a href="/blog" class="hover:text-primary-600">Blog</a>
+            <i class="fas fa-chevron-right text-[7px] opacity-30"></i>
+            <a :href="'/blog/category/' + (post.category_slug || '')" class="hover:text-primary-600 text-primary-600" x-text="post.category_name || 'Uncategorized'"></a>
+            <i class="fas fa-chevron-right text-[7px] opacity-30"></i>
+            <span class="text-gray-300 truncate max-w-[200px]" x-text="post.title"></span>
+        </nav>
+    </div>
+  </div>
+
+  <div class="container mx-auto p-4 md:p-10 max-w-7xl flex-grow">
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-12">
+        
+        <main class="lg:col-span-3">
+            <article class="bg-white rounded-[2.5rem] shadow-sm border border-gray-100 p-6 md:p-16 overflow-hidden relative nebula-glow" x-show="!loading" x-cloak>
+                <div class="mb-10"><span class="bg-primary-600 text-white text-[10px] font-black uppercase tracking-[0.2em] px-5 py-2 rounded-full shadow-lg shadow-cyan-500/30" x-text="post.category_name"></span></div>
+                <h1 class="text-3xl md:text-6xl font-black text-gray-900 mb-8 leading-[1.1] tracking-tighter" x-text="post.title"></h1>
+                <div class="flex gap-8 mb-12 text-xs font-bold uppercase text-gray-400 border-b border-gray-50 pb-8">
+                    <span><i class="far fa-calendar-alt mr-2 text-primary-600"></i> <span x-text="formatDate(post.created_at)"></span></span>
+                    <span><i class="far fa-eye mr-2 text-primary-600"></i> <span x-text="post.views"></span> Views</span>
+                </div>
+                <div x-show="post.thumbnail_url" class="mb-16 rounded-[2rem] overflow-hidden shadow-2xl border-8 border-white"><img :src="post.thumbnail_url" class="w-full h-auto object-cover max-h-[600px]"></div>
+                
+                <div class="prose prose-xl prose-cyan w-full max-w-none text-gray-700 leading-relaxed" x-html="post.content"></div>
+                
+                <div class="mt-20 pt-10 border-t border-gray-50 flex justify-between items-center">
+                    <div class="flex items-center gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-gray-900 flex items-center justify-center text-white"><i class="fas fa-user-ninja"></i></div>
+                        <div><p class="text-[9px] font-black uppercase text-gray-400">Author</p><h5 class="text-sm font-black text-gray-900" x-text="post.author_name || 'Admin'"></h5></div>
+                    </div>
+                    <button @click="copyLink()" class="px-6 py-3 bg-gray-50 text-gray-500 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-primary-600 hover:text-white transition-all"><i class="fas fa-link mr-2"></i> Copy Link</button>
+                </div>
+            </article>
+            <div x-show="loading" class="text-center py-40"><i class="fas fa-circle-notch fa-spin text-5xl text-primary-600"></i></div>
+        </main>
+
+        <aside class="lg:col-span-1 space-y-8" x-show="!loading" x-cloak>
+            <template x-for="widget in widgets" :key="widget.id">
+                <div class="bg-white p-8 rounded-[2rem] shadow-sm border border-gray-100 group hover:shadow-xl transition-all">
+                    <h3 class="font-black text-gray-900 mb-6 border-b border-gray-50 pb-4 uppercase tracking-[0.2em] text-[11px] flex items-center justify-between">
+                        <span x-text="widget.title"></span>
+                        <div class="w-2 h-2 bg-primary-600 rounded-full group-hover:animate-ping"></div>
+                    </h3>
+                    
+                    <div x-show="widget.type === 'search_bar'">
+                        <input type="text" @keyup.enter="window.location.href='/blog?search=' + $event.target.value" placeholder="Search..." class="w-full bg-gray-50 border border-gray-100 rounded-2xl px-5 py-4 text-xs font-bold focus:ring-2 focus:ring-primary-600 outline-none">
+                    </div>
+
+                    <div x-show="widget.type === 'recent_posts'" class="space-y-5">
+                        <template x-for="rp in recentPosts" :key="rp.id">
+                            <a :href="'/post/' + rp.slug" class="flex gap-4 items-center group/item">
+                                <div class="w-12 h-12 rounded-xl bg-gray-100 shrink-0 overflow-hidden shadow-inner"><img :src="rp.thumbnail_url" class="w-full h-full object-cover grayscale group-hover/item:grayscale-0 transition-all"></div>
+                                <h4 class="text-[11px] font-black text-gray-700 leading-tight truncate group-hover/item:text-primary-600 transition" x-text="rp.title"></h4>
+                            </a>
+                        </template>
+                    </div>
+
+                    <div x-show="widget.type === 'categories'" class="space-y-3">
+                        <template x-for="cat in sidebarData.categories" :key="cat.slug">
+                            <a :href="'/blog/category/' + cat.slug" class="flex justify-between text-[10px] font-black text-gray-400 hover:text-primary-600 uppercase tracking-widest border-b border-gray-50 pb-2 transition-all">
+                                <span x-text="cat.name"></span>
+                                <span class="bg-gray-100 px-2 py-0.5 rounded-full" x-text="cat.count"></span>
+                            </a>
+                        </template>
+                    </div>
+
+                    <div x-show="widget.type === 'html'" class="text-xs text-gray-500 leading-relaxed overflow-hidden" x-html="widget.content"></div>
+                </div>
+            </template>
+        </aside>
+
+    </div>
+  </div>
+
+  <footer class="py-12 border-t border-gray-100 text-center">
+      <p class="text-[10px] font-black uppercase tracking-[0.3em] text-gray-300">&copy; 2026 PasPages Core Platform</p>
+  </footer>
+
+  <script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('singlePost', () => ({
+            post: {}, menus: [], widgets: [], recentPosts: [], sidebarData: { categories: [] }, loading: true,
+            get menuTree() {
+                const roots = this.menus.filter(m => !m.parent_id);
+                return roots.map(root => ({ ...root, children: this.menus.filter(m => m.parent_id == root.id) }));
+            },
+            async init() {
+                const pathParts = window.location.pathname.split('/').filter(p => p.length > 0);
+                const slug = pathParts.pop();
+                try {
+                    const [pRes, mRes, wRes, rRes, sRes] = await Promise.all([
+                        fetch(`/api/blog/post/${slug}`),
+                        fetch('/api/blog/menus'),
+                        fetch('/api/blog/widgets'),
+                        fetch('/api/blog'),
+                        fetch('/api/blog/sidebar')
+                    ]);
+                    this.post = await pRes.json();
+                    this.menus = await mRes.json();
+                    this.widgets = await wRes.json();
+                    this.recentPosts = (await rRes.json()).slice(0, 5);
+                    this.sidebarData = await sRes.json();
+                    document.title = this.post.title + ' | PasPages';
+                } catch (e) { window.location.href = '/blog'; } finally { this.loading = false; }
+            },
+            formatDate(d) { return new Date(d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }); },
+            copyLink() { navigator.clipboard.writeText(window.location.href); alert('Link secured!'); }
+        }))
+    })
+  </script>
+</body>
+</html>

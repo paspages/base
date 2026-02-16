@@ -1,0 +1,162 @@
+<link href="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/css/suneditor.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/suneditor@latest/dist/suneditor.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/suneditor@latest/src/lang/en.js"></script>
+
+<style>
+    /* Custom Dark Mode Tweaks for SunEditor */
+    .sun-editor { border: 1px solid #333 !important; background-color: #fff !important; }
+    .sun-editor .se-toolbar { background-color: #f0f0f0; outline: 1px solid #333; }
+    .sun-editor .se-wrapper { border: 1px solid #333; }
+    /* Fix Z-Index agar toolbar tidak tertutup elemen lain */
+    .sun-editor { z-index: 1 !important; }
+</style>
+
+<div x-data="blogEditor()" class="max-w-4xl mx-auto">
+    <form @submit.prevent="save">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-white" x-text="post.id ? 'Edit Post' : 'Create Post'"></h2>
+            <div class="flex gap-3">
+                <a href="/admin/blog" class="px-4 py-2 rounded-lg border border-[#333] text-gray-400 hover:text-white text-sm">Cancel</a>
+                <button type="submit" class="bg-accent hover:bg-white text-black font-bold py-2 px-6 rounded-lg text-sm transition-all" x-text="saving ? 'Saving...' : 'Save Post'"></button>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <div class="lg:col-span-2 space-y-6">
+                <div class="card p-4 bg-[#111] border border-[#333] rounded-xl">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Title</label>
+                    <input type="text" x-model="post.title" class="w-full bg-black border border-[#333] text-white p-3 rounded text-lg font-bold focus:border-accent outline-none" placeholder="Enter post title..." required>
+                    
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mt-4 mb-2">Slug (Optional - Auto generated)</label>
+                    <input type="text" x-model="post.slug" class="w-full bg-black border border-[#333] text-gray-400 p-2 rounded text-sm focus:border-accent outline-none font-mono" placeholder="my-awesome-post">
+                </div>
+
+                <div class="card p-0 bg-[#111] border border-[#333] rounded-xl overflow-hidden">
+                    <div class="p-2 bg-[#222] border-b border-[#333]">
+                        <label class="block text-[10px] uppercase font-bold text-gray-500">Content</label>
+                    </div>
+                    <textarea id="suneditor_content" style="width:100%; height:500px; display:none;"></textarea>
+                </div>
+                
+                <div class="card p-4 bg-[#111] border border-[#333] rounded-xl">
+                     <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Excerpt (SEO Description)</label>
+                     <textarea x-model="post.excerpt" class="w-full h-24 bg-black border border-[#333] text-gray-400 p-3 rounded text-sm focus:border-accent outline-none" placeholder="Short summary for search engines..."></textarea>
+                </div>
+            </div>
+
+            <div class="space-y-6">
+                
+                <div class="card p-4 bg-[#111] border border-[#333] rounded-xl">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Status</label>
+                    <select x-model="post.status" class="w-full bg-black border border-[#333] text-white p-2 rounded text-sm outline-none cursor-pointer focus:border-accent">
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+
+                <div class="card p-4 bg-[#111] border border-[#333] rounded-xl">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Category</label>
+                    <select x-model="post.category_id" class="w-full bg-black border border-[#333] text-white p-2 rounded text-sm outline-none cursor-pointer focus:border-accent">
+                        <option value="">-- Uncategorized --</option>
+                        <template x-for="cat in categories" :key="cat.id">
+                            <option :value="cat.id" x-text="cat.name" :selected="post.category_id == cat.id"></option>
+                        </template>
+                    </select>
+                    <div class="mt-2 text-right">
+                        <a href="/admin/blog/categories" target="_blank" class="text-[10px] text-accent hover:underline hover:text-white transition-colors">+ Manage Categories</a>
+                    </div>
+                </div>
+
+                <div class="card p-4 bg-[#111] border border-[#333] rounded-xl">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Tags</label>
+                    <input type="text" x-model="post.tags" class="w-full bg-black border border-[#333] text-white p-2 rounded text-sm focus:border-accent outline-none" placeholder="tech, news, update">
+                    <p class="text-[10px] text-gray-600 mt-2">Separate with commas.</p>
+                </div>
+
+                <div class="card p-4 bg-[#111] border border-[#333] rounded-xl">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Thumbnail URL</label>
+                    <input type="text" x-model="post.thumbnail_url" class="w-full bg-black border border-[#333] text-white p-2 rounded text-sm focus:border-accent outline-none" placeholder="https://...">
+                    <div x-show="post.thumbnail_url" class="mt-3 rounded-lg overflow-hidden border border-[#333] bg-black">
+                        <img :src="post.thumbnail_url" class="w-full h-32 object-cover opacity-80 hover:opacity-100 transition-opacity" onerror="this.style.display='none'">
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('blogEditor', () => ({
+            post: {{post_data}},
+            categories: {{categories_data}},
+            saving: false,
+            editor: null, // Instance SunEditor
+
+            init() {
+                // Initialize SunEditor after DOM is ready
+                this.$nextTick(() => {
+                    this.initEditor();
+                });
+            },
+
+            initEditor() {
+                // Create SunEditor
+                this.editor = SUNEDITOR.create('suneditor_content', {
+                    height: '400px',
+                    buttonList: [
+                        ['undo', 'redo'],
+                        ['font', 'fontSize', 'formatBlock'],
+                        ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                        ['fontColor', 'hiliteColor'],
+                        ['removeFormat'],
+                        ['outdent', 'indent'],
+                        ['align', 'horizontalRule', 'list', 'lineHeight'],
+                        ['table', 'link', 'image', 'video'], 
+                        ['fullScreen', 'showBlocks', 'codeView']
+                    ],
+                    lang: SUNEDITOR_LANG['en']
+                });
+
+                // Set initial content
+                if (this.post.content) {
+                    this.editor.setContents(this.post.content);
+                }
+
+                // Optional: Image Upload Handler (Placeholder Logic)
+                this.editor.onImageUploadBefore = (files, info, core, uploadHandler) => {
+                    // Implementasi upload API Anda di sini jika ada
+                    // uploadHandler({ result: [{ url: "...", name: "..." }] });
+                };
+            },
+            
+            async save() {
+                this.saving = true;
+                
+                // 1. Sync Content from SunEditor to Alpine Data
+                this.post.content = this.editor.getContents();
+
+                try {
+                    const res = await fetch('/admin/blog/save', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(this.post)
+                    });
+                    
+                    if(res.ok) {
+                        window.location.href = '/admin/blog';
+                    } else {
+                        alert('Failed to save post.');
+                    }
+                } catch(e) {
+                    console.error(e);
+                    alert('Error: ' + e.message);
+                } finally {
+                    this.saving = false;
+                }
+            }
+        }));
+    });
+</script>

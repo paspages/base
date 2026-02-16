@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PasPages Core | System Status</title>
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --text: #e0e0e0;
+            --accent: #00ff9d; /* Matrix Green */
+            --white-glow: #ffffff;
+            --dim: #666;
+            --card-bg: #111;
+            --border: #333;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: var(--text);
+            font-family: 'Courier New', Courier, monospace;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .logo-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+            padding: 20px;
+        }
+
+        .paspages-logo-png {
+            width: 100px;
+            height: auto;
+            transition: all 0.8s ease-out;
+            opacity: 0.5;
+            filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0));
+            transform: scale(0.95);
+        }
+
+        .is-glowing-png {
+            opacity: 1;
+            transform: scale(1);
+            animation: png-pulse-white 3s infinite ease-in-out;
+        }
+
+        @keyframes png-pulse-white {
+            0% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4)); transform: scale(1); }
+            50% { 
+                filter: drop-shadow(0 0 15px rgba(255, 255, 255, 0.9)) 
+                        drop-shadow(0 0 30px rgba(255, 255, 255, 0.5));
+                transform: scale(1.05);
+            }
+            100% { filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.4)); transform: scale(1); }
+        }
+
+        .container { width: 100%; max-width: 800px; padding: 2rem; }
+        .header { border-bottom: 1px solid var(--border); padding-bottom: 1rem; margin-bottom: 2rem; text-align: center; }
+        h1 { color: #fff; font-size: 2.5rem; margin: 0; letter-spacing: -1px; }
+        .latency { color: var(--accent); font-weight: bold; font-size: 0.9rem; transition: color 0.3s ease; }
+        .latency.computing { color: #ffbd2e; animation: text-pulse 1s infinite; }
+        
+        @keyframes text-pulse {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .tagline { color: var(--dim); font-size: 0.9rem; margin-top: 0.5rem; }
+        .card { background: var(--card-bg); border: 1px solid var(--border); padding: 1.5rem; border-radius: 4px; margin-bottom: 2rem; }
+        .status-list { list-style: none; padding: 0; margin: 0; }
+        .status-list li { margin-bottom: 0.5rem; display: flex; align-items: center; }
+        .check { color: var(--accent); margin-right: 10px; font-weight: bold; }
+        .alert { color: #ffbd2e; margin-right: 10px; font-weight: bold; }
+        
+        .ecosystem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-top: 2rem; }
+        .eco-item { font-size: 0.85rem; color: #aaa; border-left: 2px solid var(--border); padding-left: 15px; transition: border-color 0.3s ease; }
+        .eco-item:hover { border-left-color: var(--accent); }
+        .eco-item strong { color: #fff; display: block; margin-bottom: 0.4rem; font-size: 1rem; }
+
+        /* ADMIN LOGIN SECTION */
+        .admin-entry { margin-top: 3rem; border: 1px dashed #444; padding: 1rem; text-align: center; border-radius: 4px; }
+        .admin-entry input { background: #1a1a1a; border: 1px solid #333; color: var(--accent); padding: 8px; font-family: monospace; margin-right: 5px; outline: none; }
+        .admin-entry button { background: var(--accent); border: none; color: #000; padding: 8px 15px; cursor: pointer; font-weight: bold; }
+        
+        .footer { margin-top: 4rem; text-align: center; font-size: 0.75rem; color: var(--dim); border-top: 1px solid var(--border); padding-top: 1.5rem; }
+    </style>
+</head>
+<body x-data="{ initialized: false, plugin_count: {{plugin_count}} }" x-init="setTimeout(() => initialized = true, 500)">
+    <div class="container">
+        <div class="logo-container">
+            <img src="/assets/images/paspages.png" alt="PasPages Logo" class="paspages-logo-png" :class="initialized ? 'is-glowing-png' : ''">
+        </div>
+
+        <header class="header">
+            <h1>PasPages Core</h1>
+            <div class="tagline">
+                <span id="latency-display" class="latency computing">--.--ms</span> Latency (End-to-End). 100% Freedom.
+            </div>
+        </header>
+
+        <section>
+            <p>If you are reading this, the <strong>PasPages Core</strong> has achieved successful deployment. Right now, this engine is "stripped-down"—a high-performance jet engine without the passenger seats.</p>
+        </section>
+
+        <div class="card">
+            <h3 style="margin-top:0; border-bottom: 1px solid #333; padding-bottom:10px; font-size: 1.1rem; color: #fff;">System Status:</h3>
+            <ul class="status-list">
+                <li><span class="check">[✓]</span> Hono Engine: <span style="color:white; margin-left: 5px;">Loaded & Optimized</span></li>
+                <li><span class="check">[✓]</span> IV-Security Layer: <span style="color:white; margin-left: 5px;">Encrypted & Active</span></li>
+                <li><span class="check">[✓]</span> Universal Storage Adapter: <span style="color:white; margin-left: 5px;">Ready (R2/Cloudinary/GD)</span></li>
+                <li><span class="alert">[!]</span> Plugins: <span style="color:white; margin-left: 5px;" x-text="plugin_count + ' detected. (Injecting logic...)'"></span></li>
+            </ul>
+        </div>
+
+        <div class="ecosystem-grid">
+            <div class="eco-item"><strong>Web</strong> SSR content or Headless CMS.</div>
+            <div class="eco-item"><strong>Mobile</strong> Dedicated MBaaS.</div>
+            <div class="eco-item"><strong>Retail</strong> Offline-to-Online POS.</div>
+            <div class="eco-item"><strong>IoT</strong> Lightweight telemetry hub.</div>
+        </div>
+
+        <div class="admin-entry">
+            <h4 style="color: #fff; margin-top: 0;">Admin Entry (Emergency Access)</h4>
+            <form action="/admin/setup" method="POST">
+                <input type="password" name="master_key" placeholder="Enter Master Key" required>
+                <button type="submit">INITIALIZE SYSTEM</button>
+            </form>
+            <p style="font-size: 0.7rem; color: #555; margin-top: 10px;">If first-time setup, use the Master Key from your configuration.</p>
+        </div>
+
+        <footer class="footer">
+            PasPages Core v1.0.0 | Rendered in <span id="render-time" style="color: var(--accent);">--.--ms</span>
+        </footer>
+    </div>
+
+    <script>
+        (function() {
+            window.addEventListener('load', () => {
+                setTimeout(() => {
+                    let totalLatency = 0;
+                    const perfEntries = performance.getEntriesByType("navigation");
+                    
+                    // FIX: Check if perfEntries[0] exists before reading duration
+                    if (perfEntries && perfEntries.length > 0) {
+                        totalLatency = perfEntries[0].duration;
+                    } else {
+                        totalLatency = performance.now(); // Fallback
+                    }
+
+                    const formattedLatency = totalLatency.toFixed(2) + "ms";
+                    const latencyEl = document.getElementById('latency-display');
+                    const footerEl = document.getElementById('render-time');
+
+                    if (latencyEl && footerEl) {
+                        latencyEl.classList.remove('computing');
+                        latencyEl.innerText = formattedLatency;
+                        footerEl.innerText = formattedLatency;
+                    }
+                }, 100);
+            });
+        })();
+    </script>
+</body>
+</html>

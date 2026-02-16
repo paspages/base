@@ -1,0 +1,80 @@
+<div x-data="tagManager()" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="lg:col-span-1">
+        <div class="card p-5 sticky top-6">
+            <h3 class="font-bold text-white mb-4" x-text="form.id ? 'Edit Tag' : 'Add New Tag'"></h3>
+            <form @submit.prevent="save">
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Name</label>
+                    <input type="text" x-model="form.name" class="w-full bg-black border border-[#333] text-white p-3 rounded text-sm focus:border-accent outline-none" required placeholder="e.g. Technology">
+                </div>
+                <div class="mb-4">
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Slug</label>
+                    <input type="text" x-model="form.slug" class="w-full bg-black border border-[#333] text-gray-400 p-2 rounded text-xs font-mono focus:border-accent outline-none" placeholder="auto-generated">
+                </div>
+                <div class="flex gap-2">
+                    <button type="submit" class="flex-1 bg-accent hover:bg-white text-black font-bold py-2 rounded text-sm transition-all">Save</button>
+                    <button type="button" @click="resetForm()" x-show="form.id" class="px-3 border border-[#333] text-gray-400 rounded hover:text-white">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="card p-0 overflow-hidden">
+            <div class="p-4 border-b border-[#222] bg-[#1a1a1a]">
+                <input type="text" x-model="search" placeholder="Search tags..." class="bg-black border border-[#333] text-white px-3 py-1 rounded text-xs w-full max-w-xs focus:border-accent outline-none">
+            </div>
+            <table class="w-full text-left border-collapse">
+                <thead>
+                    <tr>
+                        <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500">Name</th>
+                        <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500">Slug</th>
+                        <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500 text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <template x-for="tag in filteredTags" :key="tag.id">
+                        <tr class="hover:bg-white/5 transition-colors group">
+                            <td class="p-4 border-b border-[#222] font-bold text-white text-sm" x-text="tag.name"></td>
+                            <td class="p-4 border-b border-[#222] text-xs text-gray-400 font-mono" x-text="tag.slug"></td>
+                            <td class="p-4 border-b border-[#222] text-right">
+                                <button @click="edit(tag)" class="text-accent hover:text-white mr-3 text-xs uppercase font-bold">Edit</button>
+                                <button @click="remove(tag.id)" class="text-red-500 hover:text-red-400 text-xs uppercase font-bold">Delete</button>
+                            </td>
+                        </tr>
+                    </template>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('tagManager', () => ({
+            tags: {{tags_data}},
+            search: '',
+            form: { id: null, name: '', slug: '' },
+            
+            get filteredTags() {
+                if(!this.search) return this.tags;
+                return this.tags.filter(t => t.name.toLowerCase().includes(this.search.toLowerCase()));
+            },
+
+            resetForm() { this.form = { id: null, name: '', slug: '' }; },
+            edit(tag) { this.form = { ...tag }; },
+            
+            async save() {
+                const res = await fetch('/admin/blog/tags/save', { method: 'POST', body: JSON.stringify(this.form) });
+                if(res.ok) window.location.reload();
+            },
+            
+            async remove(id) {
+                if(!confirm('Delete this tag?')) return;
+                const res = await fetch('/admin/blog/tags/delete', { method: 'POST', body: JSON.stringify({id}) });
+                if(res.ok) window.location.reload();
+            }
+        }));
+    });
+</script>

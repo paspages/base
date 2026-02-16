@@ -1,0 +1,117 @@
+<div x-data="{ driver: '{{current_driver}}' }">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;">
+        <h1 style="margin: 0;">System Settings</h1>
+    </div>
+
+    <div class="card">
+        <h3 style="margin-top: 0; color: var(--accent); font-size: 0.9rem; text-transform: uppercase;">Database Maintenance</h3>
+        <p style="color: #888; font-size: 0.9rem;">Sync all plugin tables and core schemas with the D1 Database.</p>
+        
+        <div style="margin-top: 20px;">
+            <button id="migrateBtn" class="btn-save" style="width: auto; padding: 12px 24px;">
+                Run Database Migration
+            </button>
+        </div>
+        
+        <div style="margin-top: 20px;">
+            <pre id="consoleOutput" style="background: #000; padding: 15px; border: 1px solid #333; color: #00ff9d; font-family: monospace; font-size: 0.8rem; overflow-x: auto; min-height: 60px;">Waiting for command...</pre>
+        </div>
+    </div>
+
+    <div class="card" style="margin-top: 20px;">
+        <h3 style="margin-top: 0; color: var(--accent); font-size: 0.9rem; text-transform: uppercase;">Storage Configuration</h3>
+        <p style="color: #888; font-size: 0.9rem;">Select the active driver for file uploads and media management.</p>
+
+        <form id="storageForm" style="margin-top: 20px;">
+            <div class="form-group">
+                <label class="form-label">Active Storage Driver</label>
+                <select name="storage_driver" class="form-input" x-model="driver" style="cursor: pointer;">
+                    <option value="r2">Cloudflare R2 (Default)</option>
+                    <option value="cloudinary">Cloudinary (CDN)</option>
+                    <option value="googledrive">Google Drive</option>
+                </select>
+            </div>
+
+            <div x-show="driver === 'r2'" style="padding: 15px; background: #1a1a1a; border-left: 3px solid var(--accent); margin: 15px 0;">
+                <p style="margin:0; font-size:0.85rem; color: #ccc;">R2 is configured via <code>wrangler.toml</code>. Ensure the <code>CORE_BUCKET</code> binding exists.</p>
+            </div>
+
+            <div x-show="driver === 'cloudinary'" style="margin: 15px 0; border-left: 3px solid #00b8ff; padding-left: 15px;">
+                <div class="form-group">
+                    <label class="form-label">Cloud Name</label>
+                    <input type="text" name="cloudinary_cloud_name" class="form-input" value="{{cloudinary_cloud_name}}" placeholder="e.g. dxp-media">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Upload Preset (Unsigned)</label>
+                    <input type="text" name="cloudinary_upload_preset" class="form-input" value="{{cloudinary_upload_preset}}" placeholder="e.g. ml_default">
+                </div>
+            </div>
+
+            <div x-show="driver === 'googledrive'" style="margin: 15px 0; border-left: 3px solid #ffbd2e; padding-left: 15px;">
+                <div class="form-group">
+                    <label class="form-label">Access Token / API Key</label>
+                    <input type="text" name="gdrive_access_token" class="form-input" value="{{gdrive_access_token}}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Folder ID</label>
+                    <input type="text" name="gdrive_folder_id" class="form-input" value="{{gdrive_folder_id}}">
+                </div>
+            </div>
+
+            <button type="submit" class="btn-save">Save Storage Settings</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    // Migration Logic
+    const migrateBtn = document.getElementById('migrateBtn');
+    const output = document.getElementById('consoleOutput');
+
+    if (migrateBtn) {
+        migrateBtn.addEventListener('click', async () => {
+            migrateBtn.disabled = true;
+            migrateBtn.innerText = "Processing...";
+            output.innerText = "Starting engine...\n";
+            
+            try {
+                const res = await fetch('/admin/system/migrate', { method: 'POST' });
+                const data = await res.json();
+                output.innerHTML = data.logs ? data.logs.join('<br>') : "Migration complete.";
+            } catch (err) {
+                output.innerHTML = `<span style="color: #ff4444;">Error: ${err.message}</span>`;
+            } finally {
+                migrateBtn.disabled = false;
+                migrateBtn.innerText = "Run Database Migration";
+            }
+        });
+    }
+
+    // Storage Save Logic
+    const storageForm = document.getElementById('storageForm');
+    if (storageForm) {
+        storageForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            const originalText = btn.innerText;
+            
+            btn.innerText = "Saving...";
+            const formData = new FormData(e.target);
+            const jsonData = Object.fromEntries(formData.entries());
+
+            try {
+                const res = await fetch('/admin/settings/storage', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(jsonData)
+                });
+                if(res.ok) alert('Settings saved successfully!');
+                else alert('Save failed.');
+            } catch(err) {
+                alert('Error: ' + err.message);
+            } finally {
+                btn.innerText = originalText;
+            }
+        });
+    }
+</script>

@@ -1,0 +1,119 @@
+<div x-data="menuManager()" class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    
+    <div class="lg:col-span-1">
+        <div class="card p-6 bg-[#111] border border-[#333] rounded-2xl sticky top-6">
+            <h3 class="font-black text-white uppercase tracking-widest text-sm mb-6" x-text="form.id ? 'Edit Menu Item' : 'Add Menu Item'"></h3>
+            
+            <form @submit.prevent="saveMenu" class="space-y-4">
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Label</label>
+                    <input type="text" x-model="form.title" class="w-full bg-black border border-[#333] text-white p-3 rounded text-sm focus:border-accent outline-none" placeholder="e.g. Tutorial" required>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">URL / Path</label>
+                    <input type="text" x-model="form.url" class="w-full bg-black border border-[#333] text-gray-400 p-3 rounded text-sm font-mono focus:border-accent outline-none" placeholder="/category/news" required>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Parent Item (For Submenu)</label>
+                    <select x-model="form.parent_id" class="w-full bg-black border border-[#333] text-white p-3 rounded text-sm focus:border-accent outline-none">
+                        <option value="">-- No Parent (Top Level) --</option>
+                        <template x-for="m in menus.filter(item => !item.parent_id && item.id != form.id)" :key="m.id">
+                            <option :value="m.id" x-text="m.title"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-[10px] uppercase font-bold text-gray-500 mb-2">Order</label>
+                    <input type="number" x-model="form.sort_order" class="w-full bg-black border border-[#333] text-white p-3 rounded text-sm focus:border-accent outline-none">
+                </div>
+
+                <div class="flex gap-2 pt-4">
+                    <button type="submit" class="flex-1 bg-accent hover:bg-white text-black font-black uppercase tracking-widest py-3 rounded text-xs transition-all">Save Item</button>
+                    <button type="button" @click="resetForm" x-show="form.id" class="px-4 border border-[#333] text-gray-500 rounded hover:text-white transition-colors"><i class="fas fa-times"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="lg:col-span-2">
+        <div class="card p-0 bg-[#111] border border-[#222] rounded-2xl overflow-hidden">
+            <div class="p-4 bg-[#1a1a1a] border-b border-[#222]">
+                <h4 class="text-[10px] uppercase font-black text-gray-500 tracking-widest">Active Navigation Tree</h4>
+            </div>
+            <div class="p-6">
+                <template x-for="parent in menuTree" :key="parent.id">
+                    <div class="mb-2">
+                        <div class="flex items-center justify-between p-3 bg-black border border-[#333] rounded-lg group">
+                            <div class="flex items-center gap-3">
+                                <i class="fas fa-bars text-[#333] cursor-move"></i>
+                                <span class="font-bold text-white text-sm" x-text="parent.title"></span>
+                                <span class="text-[10px] text-gray-600 font-mono" x-text="parent.url"></span>
+                            </div>
+                            <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <button @click="editMenu(parent)" class="text-accent text-[10px] font-bold uppercase">Edit</button>
+                                <button @click="deleteMenu(parent.id)" class="text-red-500 text-[10px] font-bold uppercase">Delete</button>
+                            </div>
+                        </div>
+                        
+                        <div class="ml-10 mt-2 space-y-2 border-l-2 border-[#222] pl-4">
+                            <template x-for="child in parent.children" :key="child.id">
+                                <div class="flex items-center justify-between p-2 bg-black/50 border border-[#222] rounded-lg group">
+                                    <div class="flex items-center gap-3">
+                                        <i class="fas fa-level-up-alt rotate-90 text-[#333]"></i>
+                                        <span class="font-medium text-gray-300 text-sm" x-text="child.title"></span>
+                                        <span class="text-[9px] text-gray-600 font-mono" x-text="child.url"></span>
+                                    </div>
+                                    <div class="flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button @click="editMenu(child)" class="text-accent text-[10px] font-bold uppercase">Edit</button>
+                                        <button @click="deleteMenu(child.id)" class="text-red-500 text-[10px] font-bold uppercase">Delete</button>
+                                    </div>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+                <div x-show="menuTree.length === 0" class="text-center py-10 text-gray-600 italic">No menu items created.</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('menuManager', () => ({
+            menus: {{menus_data}},
+            form: { id: null, parent_id: '', title: '', url: '', sort_order: 0 },
+
+            get menuTree() {
+                const roots = this.menus.filter(m => !m.parent_id);
+                return roots.map(root => ({
+                    ...root,
+                    children: this.menus.filter(m => m.parent_id == root.id)
+                }));
+            },
+
+            resetForm() { this.form = { id: null, parent_id: '', title: '', url: '', sort_order: 0 }; },
+            editMenu(m) { this.form = { ...m, parent_id: m.parent_id || '' }; },
+
+            async saveMenu() {
+                const res = await fetch('/admin/blog/menus/save', {
+                    method: 'POST',
+                    body: JSON.stringify(this.form)
+                });
+                if(res.ok) window.location.reload();
+            },
+
+            async deleteMenu(id) {
+                if(!confirm('Delete this item and its submenus?')) return;
+                const res = await fetch('/admin/blog/menus/delete', {
+                    method: 'POST',
+                    body: JSON.stringify({id})
+                });
+                if(res.ok) window.location.reload();
+            }
+        }));
+    });
+</script>

@@ -1,0 +1,23 @@
+{
+  "name": "paspages",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "gen": "tsx tools/gen-modules.ts",
+    "prebuild": "npm run gen",
+    "build": "shx rm -rf dist && shx mkdir dist && shx cp -r public/* dist && npx esbuild src/index.ts --bundle --outfile=dist/_worker.js --format=esm --platform=neutral --target=es2022 --loader:.html=text",
+    "dev": "npm run gen && wrangler pages dev dist",
+    "deploy": "npm run build && wrangler pages deploy dist",
+    "types": "wrangler types"
+  },
+  "dependencies": {
+    "hono": "^4.0.0"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20240208.0",
+    "shx": "^0.3.4",
+    "tsx": "^4.21.0",
+    "typescript": "^5.3.3",
+    "wrangler": "^4.65.0"
+  }
+}

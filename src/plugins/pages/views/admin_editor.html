@@ -1,0 +1,86 @@
+<div x-data="pageEditor()" class="max-w-5xl mx-auto">
+    <div class="flex justify-between items-center mb-8">
+        <h2 class="text-2xl font-black text-gray-900" x-text="page.id ? 'Edit Page' : 'Create New Page'"></h2>
+        <div class="flex gap-3">
+            <a href="/admin/pages" class="px-6 py-3 rounded-xl border border-gray-200 text-gray-500 font-bold text-xs uppercase tracking-widest hover:bg-gray-50 transition-all">Cancel</a>
+            <button @click="save()" class="px-8 py-3 rounded-xl bg-primary-600 text-white font-black text-xs uppercase tracking-widest shadow-lg shadow-cyan-500/30 hover:bg-primary-700 transition-all">
+                <span x-show="!saving">Save Page</span>
+                <span x-show="saving"><i class="fas fa-circle-notch fa-spin"></i> Saving...</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div class="lg:col-span-2 space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100">
+                <input type="text" x-model="page.title" placeholder="Page Title" class="w-full text-3xl font-black text-gray-900 placeholder-gray-300 border-none focus:ring-0 outline-none p-0">
+            </div>
+            
+            <div class="bg-white rounded-3xl shadow-sm border border-gray-100 overflow-hidden">
+                <textarea id="editor" class="w-full h-96 hidden"></textarea>
+            </div>
+        </div>
+
+        <div class="space-y-6">
+            <div class="bg-white p-6 rounded-3xl shadow-sm border border-gray-100 space-y-6">
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2">URL Slug</label>
+                    <input type="text" x-model="page.slug" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold text-gray-700 focus:ring-2 focus:ring-primary-600 outline-none">
+                </div>
+                <div>
+                    <label class="block text-[10px] font-black uppercase text-gray-400 tracking-widest mb-2">Status</label>
+                    <select x-model="page.status" class="w-full bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 text-xs font-bold text-gray-700 outline-none">
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<link href="https://cdn.jsdelivr.net/npm/suneditor@2.45.1/dist/css/suneditor.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/suneditor@2.45.1/dist/suneditor.min.js"></script>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('pageEditor', () => ({
+            page: {{page_data}},
+            editor: null,
+            saving: false,
+
+            init() {
+                this.$nextTick(() => {
+                    this.editor = SUNEDITOR.create('editor', {
+                        buttonList: [
+                            ['undo', 'redo'], ['font', 'fontSize', 'formatBlock'],
+                            ['bold', 'underline', 'italic', 'strike', 'subscript', 'superscript'],
+                            ['fontColor', 'hiliteColor'], ['removeFormat'],
+                            ['outdent', 'indent', 'align', 'horizontalRule', 'list', 'lineHeight'],
+                            ['table', 'link', 'image', 'video'], ['fullScreen', 'showBlocks', 'codeView']
+                        ],
+                        minHeight: '400px',
+                        width: '100%'
+                    });
+                    if(this.page.content) this.editor.setContents(this.page.content);
+                });
+            },
+
+            async save() {
+                this.saving = true;
+                this.page.content = this.editor.getContents();
+                try {
+                    const res = await fetch('/admin/pages/save', {
+                        method: 'POST',
+                        body: JSON.stringify(this.page)
+                    });
+                    if(res.ok) {
+                        alert('Page saved!');
+                        window.location.href = '/admin/pages';
+                    }
+                } catch(e) { alert('Error saving'); }
+                finally { this.saving = false; }
+            }
+        }))
+    })
+</script>

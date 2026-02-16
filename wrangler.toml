@@ -1,0 +1,23 @@
+name = "paspages"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "./dist"
+
+[vars]
+ENVIRONMENT = "development"
+# NO STORAGE_DRIVER OR API KEYS HERE
+# ALL CONFIGURATION IS MANAGED VIA D1 DATABASE
+
+[[kv_namespaces]]
+binding = "CORE_KV"
+id = "fb98ec6c8f924191a560c29c9449279a"
+
+[[d1_databases]]
+binding = "CORE_DB"
+database_name = "core"
+database_id = "35e4edd9-3c77-4972-a00e-34071144533d"
+
+# This binding MUST remain as physical infrastructure.
+# However, it will be IGNORED by the code if the user selects Cloudinary/GDrive in Admin.
+#[[r2_buckets]]
+#binding = "CORE_BUCKET"
+#bucket_name = "paspages-assets"

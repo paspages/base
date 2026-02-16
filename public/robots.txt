@@ -1,0 +1,17 @@
+# PasPages Core Robots.txt
+# Controls search engine indexing behavior.
+
+User-agent: *
+Allow: /
+
+# Security: Prevent crawling of Admin Dashboard
+Disallow: /admin/
+
+# Security: Prevent crawling of raw API endpoints
+Disallow: /api/
+
+# Security: Prevent crawling of internal assets if necessary
+Disallow: /src/
+
+# Sitemap location (Update this with your actual domain later)
+Sitemap: https://yourdomain.com/sitemap.xml

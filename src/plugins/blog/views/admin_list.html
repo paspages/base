@@ -1,0 +1,77 @@
+<script>
+    // Safe injection into a global variable
+    window._blogPosts = {{posts_data}};
+</script>
+
+<div x-data="blogList()" class="relative">
+    <div class="flex justify-between items-center mb-6">
+        <div>
+            <h2 class="text-xl font-bold text-white">All Posts</h2>
+            <p class="text-xs text-gray-500">Manage your blog articles and publications.</p>
+        </div>
+        <a href="/admin/blog/editor" class="bg-accent hover:bg-white text-black font-bold py-2 px-4 rounded-lg text-sm transition-all">
+            + New Post
+        </a>
+    </div>
+
+    <div class="card overflow-hidden p-0 bg-[#111] border border-[#222] rounded-xl">
+        <table class="w-full text-left border-collapse">
+            <thead>
+                <tr class="bg-[#1a1a1a]">
+                    <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500 font-bold">Post Details</th>
+                    <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500 font-bold">Category</th>
+                    <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500 font-bold text-center">Stats</th>
+                    <th class="p-4 border-b border-[#222] text-xs uppercase text-gray-500 font-bold text-right">Action</th>
+                </tr>
+            </thead>
+            <tbody>
+                <template x-for="post in posts" :key="post.id">
+                    <tr class="hover:bg-white/5 transition-colors group">
+                        <td class="p-4 border-b border-[#222]">
+                            <div class="font-bold text-white text-sm" x-text="post.title"></div>
+                            <div class="text-[10px] text-gray-600 font-mono mt-1" x-text="'/' + post.slug"></div>
+                        </td>
+                        <td class="p-4 border-b border-[#222]">
+                            <span class="bg-black border border-[#333] text-[10px] px-2 py-1 rounded text-gray-400 uppercase font-bold" x-text="post.category_name || 'Uncategorized'"></span>
+                        </td>
+                        <td class="p-4 border-b border-[#222] text-center">
+                            <div class="text-xs text-white font-bold" x-text="post.views"></div>
+                            <div class="text-[9px] text-gray-600 uppercase">Views</div>
+                        </td>
+                        <td class="p-4 border-b border-[#222] text-right">
+                            <div class="flex justify-end gap-3">
+                                <a :href="'/admin/blog/editor?id=' + post.id" class="text-accent hover:text-white text-[10px] uppercase font-bold tracking-widest">Edit</a>
+                                <button @click="deletePost(post.id)" class="text-red-500 hover:text-red-400 text-[10px] uppercase font-bold tracking-widest">Delete</button>
+                            </div>
+                        </td>
+                    </tr>
+                </template>
+                <tr x-show="posts.length === 0">
+                    <td colspan="4" class="p-12 text-center text-gray-600 italic text-sm">
+                        No articles found. Start by creating your first post.
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('alpine:init', () => {
+        Alpine.data('blogList', () => ({
+            // Retrieve data from the safe script block instead of an HTML attribute
+            posts: window._blogPosts || [],
+            
+            async deletePost(id) {
+                if(!confirm('Permanently delete this article?')) return;
+                try {
+                    const res = await fetch('/admin/blog/delete', {
+                        method: 'POST',
+                        body: JSON.stringify({id})
+                    });
+                    if(res.ok) window.location.reload();
+                } catch(e) { alert('Deletion failed.'); }
+            }
+        }));
+    });
+</script>
